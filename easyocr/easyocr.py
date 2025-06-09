@@ -446,14 +446,18 @@ class Reader(object):
                  slope_ths = 0.1, ycenter_ths = 0.5, height_ths = 0.5,\
                  width_ths = 0.5, y_ths = 0.5, x_ths = 1.0, add_margin = 0.1, 
                  threshold = 0.2, bbox_min_score = 0.2, bbox_min_size = 3, max_candidates = 0,
-                 output_format='standard'):
+                 output_format='standard',
+                 resize_factor = 3): # Astra custom parameter
         '''
         Parameters:
         image: file path or numpy-array or a byte stream object
         '''
         img, img_cv_grey = reformat_input(image)
 
-        horizontal_list, free_list = self.detect(img, 
+        height, width = image.shape[:2]
+        new_width = width // resize_factor
+        new_height = height // resize_factor
+        horizontal_list, free_list = self.detect(cv2.resize(img, (new_width, new_height)), 
                                                  min_size = min_size, text_threshold = text_threshold,\
                                                  low_text = low_text, link_threshold = link_threshold,\
                                                  canvas_size = canvas_size, mag_ratio = mag_ratio,\
@@ -464,7 +468,7 @@ class Reader(object):
                                                  bbox_min_size = bbox_min_size, max_candidates = max_candidates
                                                  )
         # get the 1st result from hor & free list as self.detect returns a list of depth 3
-        horizontal_list, free_list = horizontal_list[0], free_list[0]
+        horizontal_list, free_list = (np.array(horizontal_list[0])*resize_factor).tolist(), (np.array(free_list[0])*resize_factor).tolist()
         result = self.recognize(img_cv_grey, horizontal_list, free_list,\
                                 decoder, beamWidth, batch_size,\
                                 workers, allowlist, blocklist, detail, rotation_info,\
